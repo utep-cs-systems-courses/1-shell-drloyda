@@ -30,8 +30,9 @@ while (True):
                     print(f'{inp[0]} : no such file or directory: {inp[1]}')
             else:
                 continue
+
             
-        args = [inp[0], inp[1]]
+        args = inp
 
         for dir in re.split(":", os.environ['PATH']):  # try each directory in the path
             program = "%s/%s" % (dir, args[0])
