@@ -1,9 +1,9 @@
+
 import os, sys, re
 # prompts forever
 
 while (True):
-    path = os.getcwd()
-    pid = os.getpid()
+    path = os.getcwd() + ">$"
     rc = os.fork()
     
     #fork failure
@@ -13,7 +13,8 @@ while (True):
     #child process
     elif rc == 0:
         #get user input
-        inp = input(f'{path}> $').split()
+        os.write(1, path.encode())
+        inp = os.read(0, 10000).decode().split()
 
         #exit 
         if inp[0] == "exit":
@@ -39,14 +40,10 @@ while (True):
             try:
                 os.execve(program, args, os.environ)  # try to exec program
 
-            except FileNotFoundError:  # ...expected
-                pass  # ...fail quietly
+            except FileNotFoundError:
+                pass
+        # ...fail quietly
         os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
         sys.exit(1)
-    else:  # parent (forked ok)
-
-        #os.write(1, ("Parent: My pid=%d.  Child's pid=%d\n" % (pid, rc)).encode())
+    else:  # parent
         childPidCode = os.wait()
-
-        #os.write(1, ("Parent: Child %d terminated with exit code %d\n" % childPidCode).encode())
-        #break
