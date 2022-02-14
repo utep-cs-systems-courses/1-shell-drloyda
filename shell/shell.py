@@ -1,9 +1,25 @@
-
 import os, sys, re
 # prompts forever
 
 while (True):
     path = os.getcwd() + ">$"
+    
+    #Get user inout
+    os.write(1, path.encode())
+    inp = os.read(0,1000).decode().split()
+
+    #exit
+    if inp[0] == "exit":
+        sys.exit(1)
+
+    #change directory
+    if inp[0] == "cd":
+        try:
+            os.chdir(inp[1])
+        except FileNotFoundError:
+            os.write(1, f'{inp[0]} : no such file or directory: {inp[1]}')
+        continue
+        
     rc = os.fork()
     
     #fork failure
@@ -11,29 +27,12 @@ while (True):
         sys.exit(1)
 
     #child process
-    elif rc == 0:
-        #get user input
-        os.write(1, path.encode())
-        inp = os.read(0, 10000).decode().split()
-
-        #exit 
-        if inp[0] == "exit":
-            sys.exit(1)
-            
-        #change directory    
-        if inp[0] == "cd":
-            if len(inp) > 1:
-                try:
-                    os.chdir(inp[1])
-                    continue
-                    
-                except FileNotFoundError:
-                    print(f'{inp[0]} : no such file or directory: {inp[1]}')
-            else:
-                continue
-
-            
+    elif rc == 0:                                           
         args = inp
+        if len(args) == 3 and args[1] == ">":
+            os.close(1)                
+            os.open(args[2], os.O_CREAT | os.O_WRONLY);
+            os.set_inheritable(1, True)
 
         for dir in re.split(":", os.environ['PATH']):  # try each directory in the path
             program = "%s/%s" % (dir, args[0])
@@ -42,8 +41,9 @@ while (True):
 
             except FileNotFoundError:
                 pass
-        # ...fail quietly
-        os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+            
         sys.exit(1)
-    else:  # parent
+        
+    #parent
+    else: 
         childPidCode = os.wait()
