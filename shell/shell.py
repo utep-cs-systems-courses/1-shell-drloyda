@@ -29,10 +29,11 @@ while (True):
     #child process
     elif rc == 0:                                           
         args = inp
-        if len(args) == 3 and args[1] == ">":
+        if  ">"  in args:
             os.close(1)                
-            os.open(args[2], os.O_CREAT | os.O_WRONLY);
+            os.open(args[args.index(">")+1], os.O_CREAT | os.O_WRONLY);
             os.set_inheritable(1, True)
+            args = args[:args.index(">")]
 
         for dir in re.split(":", os.environ['PATH']):  # try each directory in the path
             program = "%s/%s" % (dir, args[0])
