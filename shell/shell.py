@@ -16,10 +16,17 @@ def change_dir(inp):
     except FileNotFoundError:
         os.write(1, f'{inp[0]} : no such file or directory: {inp[1]}')
 
-def redirect(inp):
-    os.close(1)                
-    os.open(inp[inp.index(">")+1], os.O_CREAT | os.O_WRONLY);
-    os.set_inheritable(1, True)
+def redirect(inp, direct):
+    if direct == '>':
+        os.close(1)                
+        os.open(inp[inp.index(">")+1], os.O_CREAT | os.O_WRONLY);
+        os.set_inheritable(1, True)
+
+    else:
+        os.close()
+        os.open(inp[inp.index("<")+1], os.O_RONLY)
+        os.set_inheritable(0, True)
+    
 
 def pipe(inp):
     pr, pw = os.pipe()
@@ -98,10 +105,14 @@ while (True):
             #child process
         elif rc == 0:
             #redirect
-            if ">"  in inp:
-                redirect(inp)
+            if ">" in inp:
+                redirect(inp, ">")
                 inp = inp[:inp.index(">")]
 
+            elif "<" in inp:
+                redirect(inp, "<")
+                inp = inp[:inp.index("<")]
+                
             execute(inp)
             sys.exit(1)
         
