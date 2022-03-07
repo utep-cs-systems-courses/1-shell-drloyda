@@ -23,12 +23,12 @@ def redirect(inp):
 
 def pipe(inp):
     pr, pw = os.pipe()
-    rc = os.fork()
+    fork1 = os.fork()
     
-    if rc < 0:
+    if fork1 < 0:
        sys.exit(1)
         
-    if rc == 0:  # writing
+    if fork1 == 0:  # writing
         os.close(1)
         os.dup(pw)
         os.set_inheritable(1, True)
@@ -38,26 +38,43 @@ def pipe(inp):
             
         inp = inp[:inp.index("|")]
         execute(inp)
+        sys.exit(0)
 
-    elif rc > 0:  # reading
-        os.close(0)
-        os.dup(pr)
-        os.set_inheritable(0, True)
+    elif fork1 > 0:  # reading
+        fork2 = os.fork()
 
-        for f in (pr, pw):
-            os.close(f)
+        if fork2 < 0:
+            sys.exit(1)
 
-        inp = inp[inp.index("|") + 1:]
-        execute(inp)
-             
+        elif fork2 == 0:
+            os.close(0)
+            os.dup(pr)
+            os.set_inheritable(0, True)
+
+            for f in (pr, pw):
+                os.close(f)
+
+            inp = inp[inp.index("|") + 1:]
+            execute(inp)
+            sys.exit(0)
+            
+        else:
+            for f in (pr, pw):
+                os.close(f)
+                os.wait()
+            
+                
 # prompts forever
 while (True):
     path = os.getcwd() + ">$ "
+
     
     #Get user inout
     os.write(1, path.encode())
     inp = os.read(0,1000).decode().split()
-    
+
+    if len(inp) == 0:
+        continue
     #exit
     if inp[0] == "exit":
         sys.exit(1)
@@ -74,7 +91,6 @@ while (True):
         
     else:
         rc = os.fork()
-    
         #fork failure
         if rc < 0:
             sys.exit(1)
@@ -90,5 +106,5 @@ while (True):
             sys.exit(1)
         
         #parent
-        else:        
+        else:
             childPidCode = os.wait()
